@@ -1,4 +1,3 @@
-// pages/Income.jsx
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import Dashboard from "../components/Dashboard";
@@ -18,9 +17,9 @@ const Income = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-
   const [openAddIncomeModal, setOpenAddIncomeModal] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     amount: "",
@@ -28,6 +27,10 @@ const Income = () => {
     icon: "",
     date: "",
   });
+  // Get all categories without filtering
+  const getAllCategories = () => {
+    return categories;
+  };
 
   // Fetch incomes
   const fetchIncomeData = async () => {
@@ -54,49 +57,36 @@ const Income = () => {
     }
   };
 
-   const handleDownloadIncomeDetails = async() => {
-   
-     console.log("Download income details");
-     try {
-     const response=await axiosConfig.get(API_ENDPOINTS.INCOME_EXCEL_DOWNLOAD,{responseType:"blob"});
-     let filename = "income_details.xlsx";
-     const url = window.URL.createObjectURL(response.data);
-     const link = document.createElement("a");
-     link.href = url;
-     link.setAttribute("download", filename);
-     document.body.appendChild(link);
-     link.click();
-     link.parentNode.removeChild(link);
-     window.URL.revokeObjectURL(url);
-     toast.success("Income details downloaded successfully");
-      
-     } catch (error) {
-      console.error("Error the downloading income details:", error);
-      toast.error(err.response?.data?.message || "Failed to download income details");
-     }
-   }
-
-   const handleEmailIncomeDetails = async() => {
-   
-    console.log("Email income details");
+  const handleDownloadIncomeDetails = async () => {
     try {
-      const response=await axiosConfig.get(API_ENDPOINTS.EMAIL_INCOME);
-      if(response.status===200)
-      {
+      const response = await axiosConfig.get(API_ENDPOINTS.INCOME_EXCEL_DOWNLOAD, { responseType: "blob" });
+      let filename = "income_details.xlsx";
+      const url = window.URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Income details downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading income details:", error);
+      toast.error(error.response?.data?.message || "Failed to download income details");
+    }
+  };
+
+  const handleEmailIncomeDetails = async () => {
+    try {
+      const response = await axiosConfig.get(API_ENDPOINTS.EMAIL_INCOME);
+      if (response.status === 200) {
         toast.success("Email sent successfully");
       }
-      
     } catch (error) {
       console.error("Error sending email:", error);
-      toast.error(err.response?.data?.message || "Failed to send email");
+      toast.error(error.response?.data?.message || "Failed to send email");
     }
-     
-   }
-
-
-
-
-
+  };
 
   useEffect(() => {
     fetchIncomeData();
@@ -110,6 +100,29 @@ const Income = () => {
   const handleEmojiClick = (emojiData) => {
     setFormData({ ...formData, icon: emojiData.emoji });
     setShowEmojiPicker(false);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      amount: "",
+      categoryId: "",
+      icon: "",
+      date: "",
+    });
+    setEditingId(null);
+  };
+
+  const handleEdit = (income) => {
+    setEditingId(income.id);
+    setFormData({
+      name: income.name,
+      amount: income.amount.toString(),
+      categoryId: income.categoryId,
+      icon: income.icon || "",
+      date: income.date,
+    });
+    setOpenAddIncomeModal(true);
   };
 
   const handleSaveIncome = async () => {
@@ -126,34 +139,45 @@ const Income = () => {
       return;
     }
 
-    const duplicate = incomeData.find(
-      (i) => i.name.toLowerCase() === formData.name.toLowerCase()
-    );
-    if (duplicate) {
-      toast.error("Income with this name already exists");
-      return;
+    if (!editingId) {
+      const duplicate = incomeData.find(
+        (i) => i.name.toLowerCase() === formData.name.toLowerCase()
+      );
+      if (duplicate) {
+        toast.error("Income with this name already exists");
+        return;
+      }
     }
 
     try {
-      const res = await axiosConfig.post(API_ENDPOINTS.ADD_INCOME, {
-        ...formData,
-        type: "income",
-      });
-      if (res.status === 201) {
-        toast.success("Income added successfully!");
-        fetchIncomeData();
-        setOpenAddIncomeModal(false);
-        setFormData({
-          name: "",
-          amount: "",
-          categoryId: "",
-          icon: "",
-          date: "",
+      if (editingId) {
+        // Update existing income
+        const res = await axiosConfig.put(
+          ${API_ENDPOINTS.UPDATE_INCOME}/${editingId},
+          formData
+        );
+        if (res.status === 200) {
+          toast.success("Income updated successfully!");
+          fetchIncomeData();
+          setOpenAddIncomeModal(false);
+          resetForm();
+        }
+      } else {
+        // Add new income
+        const res = await axiosConfig.post(API_ENDPOINTS.ADD_INCOME, {
+          ...formData,
+          type: "income",
         });
+        if (res.status === 201) {
+          toast.success("Income added successfully!");
+          fetchIncomeData();
+          setOpenAddIncomeModal(false);
+          resetForm();
+        }
       }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to add income");
+      toast.error(err.response?.data?.message || "Failed to save income");
     }
   };
 
@@ -162,7 +186,7 @@ const Income = () => {
     if (!confirmed) return;
 
     try {
-      await axiosConfig.delete(`${API_ENDPOINTS.DELETE_INCOME}/${id}`);
+      await axiosConfig.delete(${API_ENDPOINTS.DELETE_INCOME}/${id});
       toast.success("Income deleted successfully");
       fetchIncomeData();
     } catch (err) {
@@ -178,7 +202,10 @@ const Income = () => {
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-2xl font-bold text-indigo-600">Income Dashboard</h2>
           <button
-            onClick={() => setOpenAddIncomeModal(true)}
+            onClick={() => {
+              resetForm();
+              setOpenAddIncomeModal(true);
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 shadow transition"
           >
             <Plus size={16} /> Add Income
@@ -188,28 +215,30 @@ const Income = () => {
         {/* Chart */}
         <IncomeOverview transactions={incomeData} />
 
-        {/* Income List (below chart) */}
+        {/* Income List */}
         <IncomeList
           transactions={incomeData.map((i) => ({
             ...i,
             category: categories.find((c) => c.id === i.categoryId),
-            
           }))}
           loading={loading}
-
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           onDelete={handleDeleteIncome}
-          onDownload = {handleDownloadIncomeDetails}
-          onEmail = {handleEmailIncomeDetails}
+          onEdit={handleEdit}
+          onDownload={handleDownloadIncomeDetails}
+          onEmail={handleEmailIncomeDetails}
         />
 
-        {/* Add Income Modal */}
+        {/* Add/Edit Income Modal */}
         {openAddIncomeModal && (
           <Modal
-            title="Add New Income"
+            title={editingId ? "Edit Income" : "Add New Income"}
             isOpen={openAddIncomeModal}
-            onClose={() => setOpenAddIncomeModal(false)}
+            onClose={() => {
+              setOpenAddIncomeModal(false);
+              resetForm();
+            }}
           >
             <div className="flex flex-col gap-3">
               <input
@@ -255,13 +284,12 @@ const Income = () => {
                 className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">Select Category</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.icon} {c.name}
+                {getAllCategories().map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.icon} {category.name}
                   </option>
                 ))}
               </select>
-
               {/* Date */}
               <input
                 type="date"
@@ -275,7 +303,10 @@ const Income = () => {
               <div className="flex justify-end gap-2 mt-2">
                 <button
                   type="button"
-                  onClick={() => setOpenAddIncomeModal(false)}
+                  onClick={() => {
+                    setOpenAddIncomeModal(false);
+                    resetForm();
+                  }}
                   className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
                 >
                   Cancel
@@ -285,7 +316,7 @@ const Income = () => {
                   onClick={handleSaveIncome}
                   className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600"
                 >
-                  Save
+                  {editingId ? "Update" : "Save"}
                 </button>
               </div>
             </div>

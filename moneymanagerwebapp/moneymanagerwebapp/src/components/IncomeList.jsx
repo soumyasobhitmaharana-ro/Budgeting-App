@@ -4,7 +4,7 @@ import {
   Search,
   Download,
   Mail,
-  LoaderCircle,
+  Loader2,
 } from "lucide-react";
 import TransactionInfo from "./TransactionInfo";
 import { useState } from "react";
@@ -14,8 +14,10 @@ const IncomeList = ({
   searchTerm,
   setSearchTerm,
   onDelete,
+  onEdit,
   onDownload,
   onEmail,
+  loading,
 }) => {
   const [emailLoading, setEmailLoading] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState(false);
@@ -38,7 +40,7 @@ const IncomeList = ({
     }
   };
 
-  // 🔍 Filter incomes by search term
+  // Filter transactions by search term
   const filtered = transactions.filter(
     (t) =>
       t.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,82 +49,117 @@ const IncomeList = ({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Header with Email/Download buttons */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
-        <h5 className="text-lg font-semibold">Income Sources</h5>
-        <div className="flex gap-2">
-          {/* Email Button */}
-          <button
-            disabled={emailLoading}
-            className="px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 flex items-center gap-1"
-            onClick={handleEmail}
-          >
-            {emailLoading ? (
-              <>
-                <LoaderCircle className="animate-spin" size={15} />
-                Emailing..
-              </>
-            ) : (
-              <>
-                <Mail size={15} /> Email
-              </>
-            )}
-          </button>
+      {/* Header with search and actions */}
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
+        <div className="relative flex-1 max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search incomes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
 
-          {/* Download Button */}
+        <div className="flex gap-2">
           <button
-            disabled={downloadLoading}
-            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 flex items-center gap-1"
             onClick={handleDownload}
+            disabled={downloadLoading}
+            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
           >
             {downloadLoading ? (
-              <>
-                <LoaderCircle className="animate-spin" size={15} />
-                Downloading..
-              </>
+              <Loader2 className="animate-spin h-4 w-4 mr-2" />
             ) : (
-              <>
-                <Download size={15} /> Download
-              </>
+              <Download className="h-4 w-4 mr-2" />
             )}
+            Export
+          </button>
+          <button
+            onClick={handleEmail}
+            disabled={emailLoading}
+            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+          >
+            {emailLoading ? (
+              <Loader2 className="animate-spin h-4 w-4 mr-2" />
+            ) : (
+              <Mail className="h-4 w-4 mr-2" />
+            )}
+            Email
           </button>
         </div>
       </div>
 
-      {/* Search bar */}
-      <div className="relative w-full sm:w-1/2 mb-4">
-        <Search size={18} className="absolute left-3 top-2.5 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search income..."
-          className="pl-10 pr-4 py-2 border rounded-full w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
-      {/* Grid of transactions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.length > 0 ? (
-          filtered.map((income) => (
-            <div
-              key={income.id}
-              className="group relative bg-white p-4 rounded-xl shadow hover:shadow-lg hover:bg-indigo-50 transition transform hover:-translate-y-1 cursor-pointer"
-            >
-              <TransactionInfo
-                icon={income.icon}
-                title={income.name}
-                date={income.date || "N/A"}
-                amount={income.amount}
-                type="income"
-                onDelete={() => onDelete(income.id)}
-              />
-            </div>
-          ))
+      {/* Transactions List */}
+      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+        {loading ? (
+          <div className="flex justify-center items-center p-8">
+            <Loader2 className="animate-spin h-8 w-8 text-indigo-600" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            {searchTerm ? "No matching incomes found" : "No incomes yet"}
+          </div>
         ) : (
-          <p className="col-span-full text-gray-500 text-center py-10">
-            No income found
-          </p>
+          <ul className="divide-y divide-gray-200">
+            {filtered.map((transaction) => (
+              <li key={transaction.id} className="px-6 py-4 hover:bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0">
+                      <span className="text-2xl">{transaction.icon || "💰"}</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {transaction.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {transaction.category?.name || "Uncategorized"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-green-600">
+                        ${parseFloat(transaction.amount).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(transaction.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {onEdit && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(transaction);
+                          }}
+                          className="text-indigo-600 hover:text-indigo-900"
+                          title="Edit"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(transaction.id);
+                          }}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </div>

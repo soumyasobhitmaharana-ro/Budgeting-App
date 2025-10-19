@@ -92,7 +92,7 @@ public class IncomeService {
 
   // Get Latest 5 incomes for current user
 
-   public List<IncomeDTO> getLatest5ExpensesForCurrentUser()
+   public List<IncomeDTO> getLatest5IncomesForCurrentUser()
    {
      ProfileEntity profile=profileService.getCurrentProfile();
      List<IncomeEntity> income=incomeRepo.findTop5ByProfileIdOrderByDateDesc(profile.getId());
@@ -123,6 +123,38 @@ public class IncomeService {
 	    return incomes.stream().map(this::toDTO).toList();
 	}
 
-  
+  public IncomeDTO updateIncome(Long id, IncomeDTO incomeDTO) {
+    ProfileEntity profile = profileService.getCurrentProfile();
+    IncomeEntity existingIncome = incomeRepo.findById(id)
+        .orElseThrow(() -> new RuntimeException("Income not found with id: " + id));
+    
+    if (!existingIncome.getProfile().getId().equals(profile.getId())) {
+        throw new RuntimeException("Unauthorized to update income");
+    }
+    
+    CategoryEntity category = categoryRepo.findById(incomeDTO.getCategoryId())
+        .orElseThrow(() -> new RuntimeException("Category not found with id: " + incomeDTO.getCategoryId()));
+    
+    existingIncome.setName(incomeDTO.getName());
+    existingIncome.setAmount(incomeDTO.getAmount());
+    existingIncome.setDate(incomeDTO.getDate());
+    existingIncome.setCategory(category);
+    existingIncome.setIcon(incomeDTO.getIcon());
+    
+    IncomeEntity updatedIncome = incomeRepo.save(existingIncome);
+    return toDTO(updatedIncome);
+}
+
+public IncomeDTO getIncomeById(Long id) {
+    ProfileEntity profile = profileService.getCurrentProfile();
+    IncomeEntity income = incomeRepo.findById(id)
+        .orElseThrow(() -> new RuntimeException("Income not found with id: " + id));
+    
+    if (!income.getProfile().getId().equals(profile.getId())) {
+        throw new RuntimeException("Unauthorized to access this income");
+    }
+    
+    return toDTO(income);
+}
   
 }

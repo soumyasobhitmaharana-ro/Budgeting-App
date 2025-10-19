@@ -134,5 +134,38 @@ public class ExpenseService {
 	    List<ExpenseEntity> expense = expenseRepo.findByProfileId(profile.getId());
 	    return expense.stream().map(this::toDTO).toList();
 	}
+  public ExpenseDTO updateExpense(Long id, ExpenseDTO expenseDTO) {
+    ProfileEntity profile = profileService.getCurrentProfile();
+    ExpenseEntity existingExpense = expenseRepo.findById(id)
+        .orElseThrow(() -> new RuntimeException("Expense not found with id: " + id));
+    
+    if (!existingExpense.getProfile().getId().equals(profile.getId())) {
+        throw new RuntimeException("Unauthorized to update expense");
+    }
+    
+    CategoryEntity category = categoryRepo.findById(expenseDTO.getCategoryId())
+        .orElseThrow(() -> new RuntimeException("Category not found with id: " + expenseDTO.getCategoryId()));
+    
+    existingExpense.setName(expenseDTO.getName());
+    existingExpense.setAmount(expenseDTO.getAmount());
+    existingExpense.setDate(expenseDTO.getDate());
+    existingExpense.setCategory(category);
+    existingExpense.setIcon(expenseDTO.getIcon());
+    
+    ExpenseEntity updatedExpense = expenseRepo.save(existingExpense);
+    return toDTO(updatedExpense);
+}
+
+public ExpenseDTO getExpenseById(Long id) {
+    ProfileEntity profile = profileService.getCurrentProfile();
+    ExpenseEntity expense = expenseRepo.findById(id)
+        .orElseThrow(() -> new RuntimeException("Expense not found with id: " + id));
+    
+    if (!expense.getProfile().getId().equals(profile.getId())) {
+        throw new RuntimeException("Unauthorized to access this expense");
+    }
+    
+    return toDTO(expense);
+}
   
 }

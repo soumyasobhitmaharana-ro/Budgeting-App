@@ -17,9 +17,9 @@ const Expense = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-
   const [openAddExpenseModal, setOpenAddExpenseModal] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     amount: "",
@@ -27,6 +27,11 @@ const Expense = () => {
     icon: "",
     date: "",
   });
+
+  // Get all categories without filtering
+  const getAllCategories = () => {
+    return categories;
+  };
 
   // Fetch expenses
   const fetchExpenseData = async () => {
@@ -55,11 +60,10 @@ const Expense = () => {
 
   const handleDownloadExpenseDetails = async () => {
     try {
-      const response = await axiosConfig.get(
-        API_ENDPOINTS.EXPENSE_EXCEL_DOWNLOAD,
-        { responseType: "blob" }
-      );
-      let filename = "expense_details.xlsx";
+      const response = await axiosConfig.get(API_ENDPOINTS.EXPENSE_EXCEL_DOWNLOAD, { 
+        responseType: "blob" 
+      });
+      const filename = "expense_details.xlsx";
       const url = window.URL.createObjectURL(response.data);
       const link = document.createElement("a");
       link.href = url;
@@ -71,9 +75,7 @@ const Expense = () => {
       toast.success("Expense details downloaded successfully");
     } catch (error) {
       console.error("Error downloading expense details:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to download expense details"
-      );
+      toast.error(error.response?.data?.message || "Failed to download expense details");
     }
   };
 
@@ -103,6 +105,29 @@ const Expense = () => {
     setShowEmojiPicker(false);
   };
 
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      amount: "",
+      categoryId: "",
+      icon: "",
+      date: "",
+    });
+    setEditingId(null);
+  };
+
+  const handleEdit = (expense) => {
+    setEditingId(expense.id);
+    setFormData({
+      name: expense.name,
+      amount: expense.amount.toString(),
+      categoryId: expense.categoryId,
+      icon: expense.icon || "",
+      date: expense.date,
+    });
+    setOpenAddExpenseModal(true);
+  };
+
   const handleSaveExpense = async () => {
     const today = new Date();
     const selectedDate = new Date(formData.date);
@@ -117,34 +142,43 @@ const Expense = () => {
       return;
     }
 
-    const duplicate = expenseData.find(
-      (e) => e.name.toLowerCase() === formData.name.toLowerCase()
-    );
-    if (duplicate) {
-      toast.error("Expense with this name already exists");
-      return;
-    }
-
     try {
-      const res = await axiosConfig.post(API_ENDPOINTS.ADD_EXPENSE, {
-        ...formData,
-        type: "expense",
-      });
-      if (res.status === 201) {
-        toast.success("Expense added successfully!");
-        fetchExpenseData();
-        setOpenAddExpenseModal(false);
-        setFormData({
-          name: "",
-          amount: "",
-          categoryId: "",
-          icon: "",
-          date: "",
+      if (editingId) {
+        // Update existing expense
+        const res = await axiosConfig.put(
+          ${API_ENDPOINTS.UPDATE_EXPENSE}/${editingId},
+          formData
+        );
+        if (res.status === 200) {
+          toast.success("Expense updated successfully!");
+          fetchExpenseData();
+          setOpenAddExpenseModal(false);
+          resetForm();
+        }
+      } else {
+        // Add new expense
+        const duplicate = expenseData.find(
+          (e) => e.name.toLowerCase() === formData.name.toLowerCase()
+        );
+        if (duplicate) {
+          toast.error("Expense with this name already exists");
+          return;
+        }
+
+        const res = await axiosConfig.post(API_ENDPOINTS.ADD_EXPENSE, {
+          ...formData,
+          type: "expense",
         });
+        if (res.status === 201) {
+          toast.success("Expense added successfully!");
+          fetchExpenseData();
+          setOpenAddExpenseModal(false);
+          resetForm();
+        }
       }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to add expense");
+      toast.error(err.response?.data?.message || "Failed to save expense");
     }
   };
 
@@ -153,7 +187,7 @@ const Expense = () => {
     if (!confirmed) return;
 
     try {
-      await axiosConfig.delete(`${API_ENDPOINTS.DELETE_EXPENSE}/${id}`);
+      await axiosConfig.delete(${API_ENDPOINTS.DELETE_EXPENSE}/${id});
       toast.success("Expense deleted successfully");
       fetchExpenseData();
     } catch (err) {
@@ -169,7 +203,10 @@ const Expense = () => {
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-2xl font-bold text-red-600">Expense Dashboard</h2>
           <button
-            onClick={() => setOpenAddExpenseModal(true)}
+            onClick={() => {
+              resetForm();
+              setOpenAddExpenseModal(true);
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 shadow transition"
           >
             <Plus size={16} /> Add Expense
@@ -189,16 +226,20 @@ const Expense = () => {
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           onDelete={handleDeleteExpense}
+          onEdit={handleEdit}
           onDownload={handleDownloadExpenseDetails}
           onEmail={handleEmailExpenseDetails}
         />
 
-        {/* Add Expense Modal */}
+        {/* Add/Edit Expense Modal */}
         {openAddExpenseModal && (
           <Modal
-            title="Add New Expense"
+            title={editingId ? "Edit Expense" : "Add New Expense"}
             isOpen={openAddExpenseModal}
-            onClose={() => setOpenAddExpenseModal(false)}
+            onClose={() => {
+              setOpenAddExpenseModal(false);
+              resetForm();
+            }}
           >
             <div className="flex flex-col gap-3">
               <input
@@ -244,9 +285,9 @@ const Expense = () => {
                 className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-red-500"
               >
                 <option value="">Select Category</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.icon} {c.name}
+                {getAllCategories().map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.icon} {category.name}
                   </option>
                 ))}
               </select>
@@ -264,7 +305,10 @@ const Expense = () => {
               <div className="flex justify-end gap-2 mt-2">
                 <button
                   type="button"
-                  onClick={() => setOpenAddExpenseModal(false)}
+                  onClick={() => {
+                    setOpenAddExpenseModal(false);
+                    resetForm();
+                  }}
                   className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
                 >
                   Cancel
@@ -274,7 +318,7 @@ const Expense = () => {
                   onClick={handleSaveExpense}
                   className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                 >
-                  Save
+                  {editingId ? "Update" : "Save"}
                 </button>
               </div>
             </div>

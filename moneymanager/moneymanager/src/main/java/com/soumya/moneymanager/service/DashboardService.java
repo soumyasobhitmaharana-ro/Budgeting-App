@@ -27,32 +27,31 @@ public class DashboardService {
   {
     ProfileEntity profile=profileService.getCurrentProfile();
     Map<String,Object>  returnValue = new LinkedHashMap<>();
-    List<IncomeDTO> latestExpenses=incomeService.getLatest5ExpensesForCurrentUser();
-    List<ExpenseDTO> latestIncomes=expenseService.getLatest5ExpensesForCurrentUser();
-    List<RecentTransactionDTO> recentTransactions=concat(latestIncomes.stream().map((ExpenseDTO income) -> 
-                   RecentTransactionDTO.builder()
-                   .id(income.getId())
-                   .profileId(profile.getId())
-                   .icon(income.getIcon())
-                   .name(income.getName())
-                   .type("Income")
-                   .amount(income.getAmount())
-                   .date(income.getDate())
-                   .createdAt(income.getCreatedAt())
-                   .updatedAt(income.getUpdatedAt())
-                   .build()
-                   ),latestExpenses.stream().map(expense -> 
-                   RecentTransactionDTO.builder()
-                   .id(expense.getId())
-                   .profileId(profile.getId())
-                   .icon(expense.getIcon())
-                   .name(expense.getName())
-                   .type("Expense")
-                   .amount(expense.getAmount())
-                   .date(expense.getDate())
-                   .createdAt(expense.getCreatedAt())
-                   .build()
-                   ))
+    List<IncomeDTO> latestIncomes = incomeService.getLatest5IncomesForCurrentUser();
+    List<ExpenseDTO> latestExpenses = expenseService.getLatest5ExpensesForCurrentUser();
+    List<RecentTransactionDTO> recentTransactions = concat(
+        latestIncomes.stream().map(income -> RecentTransactionDTO.builder()
+            .id(income.getId())
+            .profileId(profile.getId())
+            .icon(income.getIcon())
+            .name(income.getName())
+            .type("Income")
+            .amount(income.getAmount())
+            .date(income.getDate())
+            .createdAt(income.getCreatedAt())
+            .updatedAt(income.getUpdatedAt())
+            .build()),
+        latestExpenses.stream().map(expense -> RecentTransactionDTO.builder()
+            .id(expense.getId())
+            .profileId(profile.getId())
+            .icon(expense.getIcon())
+            .name(expense.getName())
+            .type("Expense")
+            .amount(expense.getAmount())
+            .date(expense.getDate())
+            .createdAt(expense.getCreatedAt())
+            .updatedAt(expense.getUpdatedAt())
+            .build()))
                    .sorted((a,b) -> {
                      int cmp = b.getDate().compareTo(a.getDate());
                      if(cmp==0 && a.getCreatedAt()!=null && b.getCreatedAt()!=null)
