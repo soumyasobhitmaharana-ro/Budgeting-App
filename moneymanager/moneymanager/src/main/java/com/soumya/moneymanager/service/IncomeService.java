@@ -27,16 +27,19 @@ public class IncomeService {
 
   // Retrieve all income for the current month / based on the start date and end date
 
-  public List<IncomeDTO> getCurrentMonthExpenseForCurrentUser()
-  {
-    ProfileEntity profile=profileService.getCurrentProfile();
-    LocalDate now=LocalDate.now();
-    LocalDate startDate=now.withDayOfMonth(1);
-    LocalDate endDate=now.withDayOfMonth(now.lengthOfMonth());
-    List<IncomeEntity> expenses=incomeRepo.findByProfileIdAndDateBetween(profile.getId(), startDate, endDate);
-    return expenses.stream().map(this::toDTO).toList();
-
-
+  // Retrieve incomes for a specific date range (or all time if null)
+  public List<IncomeDTO> getIncomesForDateRange(LocalDate startDate, LocalDate endDate) {
+    ProfileEntity profile = profileService.getCurrentProfile();
+    List<IncomeEntity> incomes;
+    
+    if (startDate != null && endDate != null) {
+        incomes = incomeRepo.findByProfileIdAndDateBetween(profile.getId(), startDate, endDate);
+    } else {
+        // If no dates provided, return ALL incomes (or default to a wide range if preferred, but user asked for history)
+        // For now, let's return all incomes to ensure history is visible by default if no filter is applied
+        incomes = incomeRepo.findByProfileId(profile.getId());
+    }
+    return incomes.stream().map(this::toDTO).toList();
   }
 
 

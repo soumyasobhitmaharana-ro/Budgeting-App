@@ -8,16 +8,43 @@ export const DashboardData = () => {
     totalExpense: 0,
     totalBalance: 0,
     recentTransactions: [],
+    allIncomes: [],
+    allExpenses: [],
+    categories: [],
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const res = await axiosConfig.get(API_ENDPOINTS.DASH_BOARD);
-        setData(res.data); // backend must return totals + transactions
+        // Fetch dashboard summary (explicit path for clarity)
+        const dashboardRes = await axiosConfig.get("/dashboard");
+        
+        // Fetch all incomes and expenses for analytics
+        const [incomesRes, expensesRes, categoriesRes] = await Promise.all([
+          axiosConfig.get(API_ENDPOINTS.GET_ALL_INCOME),
+          axiosConfig.get(API_ENDPOINTS.GET_ALL_EXPENSES),
+          axiosConfig.get(API_ENDPOINTS.GET_ALL_CATEGORIES),
+        ]);
+
+        setData({
+          ...dashboardRes.data,
+          allIncomes: incomesRes.data || [],
+          allExpenses: expensesRes.data || [],
+          categories: categoriesRes.data || [],
+        });
       } catch (err) {
-        console.error("Error fetching dashboard:", err);
+        const status = err?.response?.status;
+        const url = err?.config?.url || err?.response?.config?.url;
+        const message = err?.response?.data || err?.message || err;
+        console.error("[dashboard] Fetch error:", { status, url, message });
+        // Set empty arrays on error
+        setData(prev => ({
+          ...prev,
+          allIncomes: [],
+          allExpenses: [],
+          categories: [],
+        }));
       } finally {
         setLoading(false);
       }

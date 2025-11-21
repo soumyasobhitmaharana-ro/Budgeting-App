@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Dashboard from "../components/Dashboard";
 import useUser from "../hooks/useUser";
 import axiosConfig from "../util/axiosConfig";
@@ -37,11 +37,30 @@ const Filter = () => {
   const [type, setType] = useState("income");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [keyword, setKeyword] = useState("");
   const [sortField, setSortField] = useState("amount");
   const [sortOrder, setSortOrder] = useState("desc");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  // Categories for filter dropdown
+  const [categories, setCategories] = useState([]);
+
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axiosConfig.get(API_ENDPOINTS.GET_ALL_CATEGORIES);
+        if (res.status === 200) {
+          setCategories(res.data);
+        }
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleFilter = async (e) => {
     e.preventDefault();
@@ -54,13 +73,19 @@ const Filter = () => {
         keyword,
         sortField,
         sortOrder,
+        categoryId: selectedCategoryId || null, // Include in API call (backend may filter or ignore)
       });
 
       // ✅ Add type to every item (income/expense)
-      const dataWithType = res.data.map((item) => ({
+      let dataWithType = res.data.map((item) => ({
         ...item,
         type,
       }));
+
+      // Filter by category on frontend if category is selected (since backend may not support it)
+      if (selectedCategoryId) {
+        dataWithType = dataWithType.filter((item) => item.categoryId === parseInt(selectedCategoryId));
+      }
 
       setResults(dataWithType);
     } catch (err) {
@@ -70,6 +95,8 @@ const Filter = () => {
       setLoading(false);
     }
   };
+
+
 
   return (
     <Dashboard activeMenu="Filter">
@@ -87,7 +114,11 @@ const Filter = () => {
             <label className="text-sm font-medium">Type</label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value)}
+              onChange={(e) => {
+                setType(e.target.value);
+                // Reset category selection when type changes
+                setSelectedCategoryId("");
+              }}
               className="border p-2 rounded"
             >
               <option value="income">Income</option>
@@ -104,6 +135,30 @@ const Filter = () => {
               onChange={(e) => setStartDate(e.target.value)}
               className="border p-2 rounded"
             />
+          </div>
+
+          {/* Category Filter */}
+          <div className="flex flex-col">
+            <label className="text-sm font-medium">Category</label>
+            <select
+              value={selectedCategoryId}
+              onChange={(e) => setSelectedCategoryId(e.target.value)}
+              className="border p-2 rounded"
+            >
+              <option value="">All Categories</option>
+              {categories
+                .filter((cat) => {
+                  // Filter categories based on selected type
+                  if (!type) return true;
+                  const typeCapitalized = type.charAt(0).toUpperCase() + type.slice(1);
+                  return cat.type === typeCapitalized || cat.type.toLowerCase() === type.toLowerCase();
+                })
+                .map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.icon} {category.name}
+                  </option>
+                ))}
+            </select>
           </div>
 
           {/* End Date */}

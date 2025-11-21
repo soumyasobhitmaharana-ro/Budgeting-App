@@ -24,6 +24,10 @@ public interface ExpenseRepo extends  JpaRepository<ExpenseEntity, Long>{
   @Query("select sum(e.amount) from ExpenseEntity e where e.profile.id = :profileId")
   BigDecimal findTotalExpenseByProfileId(@Param("profileId") Long profileId);
 
+  // Sum expenses by category, profile, and date range
+  @Query("select sum(e.amount) from ExpenseEntity e where e.profile.id = :profileId and e.category.id = :categoryId and e.date between :startDate and :endDate")
+  BigDecimal findTotalExpenseByProfileIdAndCategoryIdAndDateBetween(@Param("profileId") Long profileId, @Param("categoryId") Long categoryId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
  
  // select * from expense where profile_id = ? 1 and date between ? 2 and ? 3
   List<ExpenseEntity> findByProfileIdAndDateBetweenAndNameContainingIgnoreCase(Long profileId, LocalDate startDate, LocalDate endDate, String keyword,Sort sort);

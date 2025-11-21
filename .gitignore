@@ -1,0 +1,16 @@
+# Ignore Eclipse workspace metadata
+moneymanager/.metadata/
+moneymanager/.project
+moneymanager/.classpath
+moneymanager/.settings/
+
+# Ignore Spring Boot build folder
+moneymanager/moneymanager/target/
+
+# Ignore React build and node modules
+moneymanagerwebapp/moneymanagerwebapp/dist/
+moneymanagerwebapp/moneymanagerwebapp/node_modules/
+
+# Logs / Cache / Temp
+*.log
+*.tmp

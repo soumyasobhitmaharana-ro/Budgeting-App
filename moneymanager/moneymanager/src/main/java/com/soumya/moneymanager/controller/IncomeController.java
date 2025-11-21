@@ -1,5 +1,6 @@
 package com.soumya.moneymanager.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.soumya.moneymanager.dto.IncomeDTO;
@@ -32,9 +34,12 @@ public class IncomeController {
   }
 
    @GetMapping
-  public ResponseEntity<List<IncomeDTO>> getExpenses(){
-    List<IncomeDTO> expenses=incomeService.getCurrentMonthExpenseForCurrentUser();
-    return ResponseEntity.status(HttpStatus.OK).body(expenses);
+  public ResponseEntity<List<IncomeDTO>> getIncomes(
+      @RequestParam(required = false) LocalDate startDate,
+      @RequestParam(required = false) LocalDate endDate
+  ){
+    List<IncomeDTO> incomes=incomeService.getIncomesForDateRange(startDate, endDate);
+    return ResponseEntity.status(HttpStatus.OK).body(incomes);
   }
 
   @DeleteMapping("/{id}")

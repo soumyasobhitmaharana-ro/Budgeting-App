@@ -1,4 +1,4 @@
-import { Pencil, Trash2, Search, Download, Mail, Loader2 } from "lucide-react";
+ import { Pencil, Trash2, Search, Download, Mail, Loader2 } from "lucide-react";
 import TransactionInfo from "./TransactionInfo";
 import { useState } from "react";
 

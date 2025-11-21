@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { AppContext } from "../context/AppContext";
-import axios from "axios";
+import axiosConfig from "../util/axiosConfig";
 import { useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from "../util/apiEndpoints";
 import { useEffect } from "react";
@@ -21,12 +21,13 @@ const useUser = () => {
     let isMounted = true;
     const fetchUserInfo = async () => {
       try {
-        const response = await axios.get(API_ENDPOINTS.GET_USER_INFO);
+        const response = await axiosConfig.get(API_ENDPOINTS.GET_USER_INFO);
         if (isMounted && response.data) {
           setUser(response.data);
         }
       } catch (error) {
-        if (error.response.status === 401) {
+        const status = error?.response?.status;
+        if (status === 401) {
           clearUser();
           localStorage.removeItem("token");
           navigate("/login");

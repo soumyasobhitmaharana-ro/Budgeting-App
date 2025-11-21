@@ -17,7 +17,7 @@ const ExpenseOverview = ({ transactions }) => {
         Monitor your spending patterns and analyze where your money goes with
         this interactive chart.
       </p>
-      <CustomLineChart data={chartData} />
+      <CustomLineChart data={chartData} name="Expense" />
     </div>
   );
 };

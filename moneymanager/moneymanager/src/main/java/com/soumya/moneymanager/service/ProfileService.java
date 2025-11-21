@@ -162,15 +162,32 @@ public class ProfileService {
         System.out.println("Trying login with: " + authDTO.getEmail() + " / " + authDTO.getPassword());
 
         String token=jwtUtil.generateToken(authDTO.getEmail());
+        String refreshToken = jwtUtil.generateRefreshToken(authDTO.getEmail());
         System.out.println("Generated token: " + token);
         return Map.of(
           "token",token,
+          "refreshToken", refreshToken,
           "user",getPublicProfile(authDTO.getEmail())
         );
     } catch (Exception e) {
       throw new RuntimeException("Invalid email or password");  
     }
    
+  }
+
+  public Map<String, Object> refreshToken(Map<String, String> request) {
+      String refreshToken = request.get("refreshToken");
+      String username = jwtUtil.extractUsername(refreshToken);
+      
+      if (username != null && jwtUtil.validateToken(refreshToken, username)) {
+          String newAccessToken = jwtUtil.generateToken(username);
+          return Map.of(
+              "token", newAccessToken,
+              "refreshToken", refreshToken // Return the same refresh token or rotate it if needed
+          );
+      } else {
+          throw new RuntimeException("Invalid refresh token");
+      }
   }
   
   public ProfileDto updateProfileImage(String imageUrl) {

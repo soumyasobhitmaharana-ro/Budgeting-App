@@ -45,12 +45,18 @@ const Login = () => {
     }
     try {
       const response = await axiosConfig.post(API_ENDPOINTS.LOGIN, { email, password });
-      const { token, user } = response.data;
-      if (token) {
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-        setUser(user);
+      const user = response.data?.user;
+      const tok = response.data?.token || response.data?.jwt;
+      const refreshTok = response.data?.refreshToken;
+
+      if (tok) {
+        localStorage.setItem("token", tok);
+        if (refreshTok) localStorage.setItem("refreshToken", refreshTok);
+        if (user) localStorage.setItem("user", JSON.stringify(user));
+        if (user) setUser(user);
         navigate("/dashboard");
+      } else {
+        setError("Login succeeded but no token returned by server.");
       }
     } catch (error) {
       if (error.response) {
@@ -131,9 +137,8 @@ const Login = () => {
 
       {/* Mobile Slide-In Menu */}
       <div
-        className={`fixed top-0 right-0 h-full w-64 bg-white/90 backdrop-blur shadow-xl z-30 transform ${
-          menuOpen ? "translate-x-0" : "translate-x-full"
-        } transition-transform duration-300 ease-in-out`}
+        className={`fixed top-0 right-0 h-full w-64 bg-white/90 backdrop-blur shadow-xl z-30 transform ${menuOpen ? "translate-x-0" : "translate-x-full"
+          } transition-transform duration-300 ease-in-out`}
       >
         <div className="flex flex-col mt-20 space-y-6 px-6">
           <Link
@@ -219,9 +224,8 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full flex items-center justify-center py-3 md:py-4 rounded-2xl font-semibold shadow-lg transition-all duration-300 bg-gradient-to-r from-orange-400 via-rose-500 to-violet-500 text-white ${
-                isLoading ? "opacity-70 cursor-not-allowed" : "hover:scale-[1.02]"
-              }`}
+              className={`w-full flex items-center justify-center py-3 md:py-4 rounded-2xl font-semibold shadow-lg transition-all duration-300 bg-gradient-to-r from-orange-400 via-rose-500 to-violet-500 text-white ${isLoading ? "opacity-70 cursor-not-allowed" : "hover:scale-[1.02]"
+                }`}
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">

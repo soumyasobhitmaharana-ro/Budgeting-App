@@ -21,7 +21,8 @@ public class JwtUtil {
     private String secret;  // injected from application.properties or environment
 
     // Token validity (e.g., 10 hours)
-    private final long JWT_EXPIRATION = 1000 * 60 * 60 * 10;
+    private final long JWT_EXPIRATION = 1000L * 60 * 60 * 10; // 10 hours
+    private final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 7; // 7 days
 
     /**
      * 🔑 Get signing key from secret string
@@ -74,25 +75,32 @@ public class JwtUtil {
      * 🛠 Generate token with username (subject only)
      */
     public String generateToken(String username) {
-        return createToken(Map.of(), username);
+        return createToken(Map.of(), username, JWT_EXPIRATION);
     }
 
     /**
      * 🛠 Generate token with custom claims
      */
     public String generateToken(Map<String, Object> claims, String username) {
-        return createToken(claims, username);
+        return createToken(claims, username, JWT_EXPIRATION);
+    }
+
+    /**
+     * 🔄 Generate Refresh Token
+     */
+    public String generateRefreshToken(String username) {
+        return createToken(Map.of(), username, REFRESH_TOKEN_EXPIRATION);
     }
 
     /**
      * 🏗 Create JWT token
      */
-    private String createToken(Map<String, Object> claims, String subject) {
+    private String createToken(Map<String, Object> claims, String subject, long expiration) {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

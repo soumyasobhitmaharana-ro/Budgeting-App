@@ -8,7 +8,7 @@ export const assets = {
   signup
 };
 
-import { LayoutDashboard, List, Wallet, Coins, FunnelPlus } from "lucide-react";
+import { LayoutDashboard, List, Wallet, Coins, FunnelPlus, CreditCard, Target, MessageSquare } from "lucide-react";
 
 export const SIDE_BAR_DATA = 
    [
@@ -37,9 +37,27 @@ export const SIDE_BAR_DATA =
     path: "/expense",
   },
   {
+    id: "04b",
+    label: "Community",
+    icon: MessageSquare,
+    path: "/community",
+  },
+  {
     id: "05",
     label: "Filter",
     icon: FunnelPlus,
     path: "/filter",
+  },
+  {
+    id: "06",
+    label: "Budgets",
+    icon: CreditCard,
+    path: "/budgets",
+  },
+  {
+    id: "07",
+    label: "Savings Goals",
+    icon: Target,
+    path: "/goals",
   }
 ];

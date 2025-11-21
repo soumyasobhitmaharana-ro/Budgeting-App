@@ -59,6 +59,21 @@ const Income = () => {
 
   const handleDownloadIncomeDetails = async () => {
     try {
+      // Allow choosing format via prompt to keep same UI element
+      const choice = (window.prompt("Export format: excel / pdf / csv", "excel") || "").toLowerCase();
+      if (choice === "pdf") {
+        const { downloadPdf } = await import("../util/exportClient");
+        await downloadPdf();
+        toast.success("Income PDF downloaded successfully");
+        return;
+      }
+      if (choice === "csv") {
+        const { downloadCsv } = await import("../util/exportClient");
+        await downloadCsv();
+        toast.success("Income CSV downloaded successfully");
+        return;
+      }
+      // default to existing Excel
       const response = await axiosConfig.get(API_ENDPOINTS.INCOME_EXCEL_DOWNLOAD, { responseType: "blob" });
       let filename = "income_details.xlsx";
       const url = window.URL.createObjectURL(response.data);
@@ -153,7 +168,7 @@ const Income = () => {
       if (editingId) {
         // Update existing income
         const res = await axiosConfig.put(
-          ${API_ENDPOINTS.UPDATE_INCOME}/${editingId},
+          `${API_ENDPOINTS.UPDATE_INCOME}/${editingId}`,
           formData
         );
         if (res.status === 200) {
@@ -186,7 +201,7 @@ const Income = () => {
     if (!confirmed) return;
 
     try {
-      await axiosConfig.delete(${API_ENDPOINTS.DELETE_INCOME}/${id});
+      await axiosConfig.delete(`${API_ENDPOINTS.DELETE_INCOME}/${id}`);
       toast.success("Income deleted successfully");
       fetchIncomeData();
     } catch (err) {

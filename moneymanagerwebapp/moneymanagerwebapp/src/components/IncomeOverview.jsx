@@ -16,7 +16,7 @@ const IncomeOverview = ({ transactions }) => {
       <p className="text-sm text-gray-500">
         Track your earnings over time and analyze your income trends with this interactive chart.
       </p>
-      <CustomLineChart data={chartData} />
+      <CustomLineChart data={chartData} name="Income" />
     </div>
   );
 };

@@ -37,22 +37,28 @@ private final UserDetailsService userDetailsService;
     String username = null;
     String jwt = null;
 
-    if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-      jwt = authorizationHeader.substring(7);
-      username = jwtUtil.extractUsername(jwt);
+    try {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            jwt = authorizationHeader.substring(7);
+            username = jwtUtil.extractUsername(jwt);
+        }
+
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            if (jwtUtil.validateToken(jwt, username)) {
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+    } catch (Exception e) {
+        // Log the error but don't throw it. This allows the request to proceed to the next filter.
+        // If authentication was required, the AuthenticationEntryPoint will handle the 401.
+        // If the endpoint is public (like /login), it will proceed normally.
+        logger.error("Cannot set user authentication: {}", e);
     }
 
-    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-      
-    UserDetails userDetails=userDetailsService.loadUserByUsername(username);
-    if(jwtUtil.validateToken(jwt,username))
-    {
-      UsernamePasswordAuthenticationToken authToken=new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
-      authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-      SecurityContextHolder.getContext().setAuthentication(authToken);
-    }
-      
-  }
     filterChain.doFilter(request, response);
   }
 

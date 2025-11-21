@@ -55,7 +55,18 @@ public class ProfileController {
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message",e.getMessage()));
     }
+    }
     
+
+
+  @PostMapping("/refresh-token")
+  public ResponseEntity<Map<String, Object>> refreshToken(@RequestBody Map<String, String> request) {
+      try {
+          Map<String, Object> response = profileService.refreshToken(request);
+          return ResponseEntity.ok(response);
+      } catch (Exception e) {
+          return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", e.getMessage()));
+      }
   }
   
   @PostMapping("/forgot-password")

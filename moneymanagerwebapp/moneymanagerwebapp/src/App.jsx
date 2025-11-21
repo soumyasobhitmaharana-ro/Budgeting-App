@@ -3,10 +3,13 @@ import Expense from "./pages/Expense";
 import Filter from "./pages/Filter";
 import Home from "./pages/Home";
 import Income from "./pages/Income";
+import Community from "./pages/Community";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import IndexPage from "./pages/IndexPage";
-import ResetPassword from "./pages/ResetPassword"; // <-- new
+import ResetPassword from "./pages/ResetPassword";
+import Budgets from "./pages/Budgets";
+import SavingsGoals from "./pages/SavingsGoals";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
@@ -29,7 +32,10 @@ const App = () => {
           <Route path="/income" element={<Income />} />
           <Route path="/category" element={<Category />} />
           <Route path="/filter" element={<Filter />} />
-          <Route path="/reset-password" element={<ResetPassword />} /> {/* <-- added */}
+          <Route path="/budgets" element={<Budgets />} />
+          <Route path="/goals" element={<SavingsGoals />} />
+          <Route path="/community" element={<Community />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       </BrowserRouter>
     </>

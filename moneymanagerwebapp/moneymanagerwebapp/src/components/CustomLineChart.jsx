@@ -10,7 +10,7 @@ import {
   Area,
 } from "recharts";
 
-const CustomLineChart = ({ data }) => {
+const CustomLineChart = ({ data, name = "Amount" }) => {
   return (
     <div className="w-full h-80 bg-gradient-to-br from-indigo-50 to-purple-100 rounded-2xl shadow-lg p-4">
       <ResponsiveContainer width="100%" height="100%">
@@ -34,6 +34,7 @@ const CustomLineChart = ({ data }) => {
               fontSize: "12px",
               boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
             }}
+            formatter={(value) => [`₹${value}`, name]}
           />
 
           {/* Gradient fills */}
@@ -50,12 +51,19 @@ const CustomLineChart = ({ data }) => {
           </defs>
 
           {/* Area under curve */}
-          <Area type="monotone" dataKey="amount" stroke="none" fill="url(#colorIncome)" />
+          <Area
+            type="monotone"
+            dataKey="amount"
+            stroke="none"
+            fill="url(#colorIncome)"
+            tooltipType="none"
+          />
 
           {/* Line */}
           <Line
             type="monotone"
             dataKey="amount"
+            name={name}
             stroke="#6366f1"
             strokeWidth={3}
             dot={{ r: 5, fill: "#6366f1", stroke: "white", strokeWidth: 2 }}

@@ -60,6 +60,19 @@ const Expense = () => {
 
   const handleDownloadExpenseDetails = async () => {
     try {
+      const choice = (window.prompt("Export format: excel / pdf / csv", "excel") || "").toLowerCase();
+      if (choice === "pdf") {
+        const { downloadPdf } = await import("../util/exportClient");
+        await downloadPdf();
+        toast.success("Expense PDF downloaded successfully");
+        return;
+      }
+      if (choice === "csv") {
+        const { downloadCsv } = await import("../util/exportClient");
+        await downloadCsv();
+        toast.success("Expense CSV downloaded successfully");
+        return;
+      }
       const response = await axiosConfig.get(API_ENDPOINTS.EXPENSE_EXCEL_DOWNLOAD, { 
         responseType: "blob" 
       });
@@ -146,7 +159,7 @@ const Expense = () => {
       if (editingId) {
         // Update existing expense
         const res = await axiosConfig.put(
-          ${API_ENDPOINTS.UPDATE_EXPENSE}/${editingId},
+          `${API_ENDPOINTS.UPDATE_EXPENSE}/${editingId}`,
           formData
         );
         if (res.status === 200) {
@@ -187,7 +200,7 @@ const Expense = () => {
     if (!confirmed) return;
 
     try {
-      await axiosConfig.delete(${API_ENDPOINTS.DELETE_EXPENSE}/${id});
+      await axiosConfig.delete(`${API_ENDPOINTS.DELETE_EXPENSE}/${id}`);
       toast.success("Expense deleted successfully");
       fetchExpenseData();
     } catch (err) {
